@@ -18,8 +18,8 @@ const char* password = STAPSK;
 
 const int port = 5006;
 
- WiFiServer server(port);
- WiFiClient serverClients[MAX_SRV_CLIENTS];
+WiFiServer server(port);
+WiFiClient serverClients[MAX_SRV_CLIENTS];
 
 int regPins[3] = {D6, D7, D8};
 //74HC595 pins latchPin = D8; clockPin = D7; dataPin = D6;
@@ -48,11 +48,9 @@ String Data = "";
 
 void setup() {
 
-
   Serial.begin(BAUD_SERIAL);
   Serial.setRxBufferSize(RXBUFFERSIZE);
 
-Serial.println("test 2");
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
@@ -70,14 +68,15 @@ Serial.println("test 2");
   pinMode(regPins[0], OUTPUT);
   pinMode(regPins[1], OUTPUT);
   pinMode(regPins[2], OUTPUT);
+
   pinMode(contPins[0], OUTPUT);
   pinMode(contPins[1], OUTPUT);
+
   pinMode(motor[1], OUTPUT);
   pinMode(motor[2], OUTPUT);
   pinMode(motor[3], OUTPUT);
   pinMode(motor[4], OUTPUT);
 
-Serial.println("test 5");
   Serial.println("");
   Serial.print("Connected to ");
   Serial.println(ssid);
@@ -88,79 +87,79 @@ Serial.println("test 5");
 
   moveData = "S";
   speed = 250;
-
 }
 
 void loop() {
 
-  
-  Serial.println("Move forward");
+  // TESTING
   forward();
-  delay(5000);
-  Serial.println("Move forward");
+  delay(500);
+  mstop();
+  delay(500);
   backward();
-  delay(5000);
+  delay(500);
+  mstop();
 
-  // moveDataProcess();
-  // setSpeed();
+  moveDataProcess();
+  setSpeed();
 
-  // //check if there are any new clients
-  // if (server.hasClient()) {
-  //   //find free/disconnected spot
-  //   int i;
-  //   for (i = 0; i < MAX_SRV_CLIENTS; i++)
-  //     if (!serverClients[i]) { // equivalent to !serverClients[i].connected()
-  //       serverClients[i] = server.available();
-  //       break;
-  //     }
+  //check if there are any new clients
+  if (server.hasClient()) {
+    //find free/disconnected spot
+    int i;
+    for (i = 0; i < MAX_SRV_CLIENTS; i++)
+      if (!serverClients[i]) { // equivalent to !serverClients[i].connected()
+        serverClients[i] = server.available();
+        break;
+      }
 
-  //   if (i == MAX_SRV_CLIENTS) {
-  //     server.available().println("busy");
+    if (i == MAX_SRV_CLIENTS) {
+      server.available().println("busy");
 
-  //   }
-  // }
+    }
+  }
 
-  // for (int i = 0; i < MAX_SRV_CLIENTS; i++)
-  //   while (serverClients[i].available() && Serial.availableForWrite() > 0) {
-  //     // working char by char is not very efficient
-  //     Data = serverClients[i].read();
-  //     dataProcess(Data);
-  //   }
+  for (int i = 0; i < MAX_SRV_CLIENTS; i++)
+    while (serverClients[i].available() && Serial.availableForWrite() > 0) {
+      // working char by char is not very efficient
+      Data = serverClients[i].read();
+      dataProcess(Data);
+    }
 
 
-  // // determine maximum output size "fair TCP use"
-  // // client.availableForWrite() returns 0 when !client.connected()
-  // int maxToTcp = 0;
-  // for (int i = 0; i < MAX_SRV_CLIENTS; i++)
-  //   if (serverClients[i]) {
-  //     int afw = serverClients[i].availableForWrite();
-  //     if (afw) {
-  //       if (!maxToTcp) {
-  //         maxToTcp = afw;
-  //       } else {
-  //         maxToTcp = std::min(maxToTcp, afw);
-  //       }
-  //     } else {
-  //       // warn but ignore congested clients
-  //     }
-  //   }
+  // determine maximum output size "fair TCP use"
+  // client.availableForWrite() returns 0 when !client.connected()
+  int maxToTcp = 0;
+  for (int i = 0; i < MAX_SRV_CLIENTS; i++)
+    if (serverClients[i]) {
+      int afw = serverClients[i].availableForWrite();
+      if (afw) {
+        if (!maxToTcp) {
+          maxToTcp = afw;
+        } else {
+          maxToTcp = std::min(maxToTcp, afw);
+        }
+      } else {
+        // warn but ignore congested clients
+      }
+    }
 
-  // //check UART for data
-  // size_t len = std::min(Serial.available(), maxToTcp);
-  // len = std::min(len, (size_t)STACK_PROTECTOR);
-  // if (len) {
-  //   uint8_t sbuf[len];
-  //   int serial_got = Serial.readBytes(sbuf, len);
-  //   // push UART data to all connected telnet clients
-  //   for (int i = 0; i < MAX_SRV_CLIENTS; i++)
-  //     // if client.availableForWrite() was 0 (congested)
-  //     // and increased since then,
-  //     // ensure write space is sufficient:
-  //     if (serverClients[i].availableForWrite() >= serial_got) {
-  //       size_t tcp_sent = serverClients[i].write(sbuf, serial_got);
+  //check UART for data
+  size_t len = std::min(Serial.available(), maxToTcp);
+  len = std::min(len, (size_t)STACK_PROTECTOR);
+  if (len) {
+    uint8_t sbuf[len];
+    int serial_got = Serial.readBytes(sbuf, len);
+    // push UART data to all connected telnet clients
+    for (int i = 0; i < MAX_SRV_CLIENTS; i++)
+      // if client.availableForWrite() was 0 (congested)
+      // and increased since then,
+      // ensure write space is sufficient:
+      if (serverClients[i].availableForWrite() >= serial_got) {
+        size_t tcp_sent = serverClients[i].write(sbuf, serial_got);
 
-  //     }
-  // }
+      }
+  }
 }
 
 void dataProcess(String Data)
