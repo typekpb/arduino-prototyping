@@ -45,6 +45,7 @@ byte dataArray[4] = {39, 216, 149, 106};
 String moveData = "";
 String lastMoveData = "";
 String Data = "";
+char DataC;
 
 void setup() {
 
@@ -87,9 +88,7 @@ void setup() {
 
   moveData = "S";
   speed = 250;
-}
 
-void loop() {
 
   // TESTING
   forward();
@@ -99,6 +98,10 @@ void loop() {
   backward();
   delay(500);
   mstop();
+
+}
+
+void loop() {
 
   moveDataProcess();
   setSpeed();
@@ -122,8 +125,8 @@ void loop() {
   for (int i = 0; i < MAX_SRV_CLIENTS; i++)
     while (serverClients[i].available() && Serial.availableForWrite() > 0) {
       // working char by char is not very efficient
-      Data = serverClients[i].read();
-      dataProcess(Data);
+      DataC = serverClients[i].read();
+      dataProcess(DataC);
     }
 
 
@@ -162,26 +165,36 @@ void loop() {
   }
 }
 
-void dataProcess(String Data)
+// void dataProcess(String Data)
+void dataProcess(char Data)
 {
-  Data.trim();
-
+  // Data.trim();
+  // DataC = Data[0];
   Serial.println(Data);
-
-  if (Data == "F" || Data == "B" || Data == "L" || Data == "R" || Data == "S" || Data == "Q" || Data == "W" || Data == "q" || Data == "w")
+  // Serial.println(DataC);
+  // Serial.println(Data == "F");
+  
+  // if (Data == "F" || Data == "B" || Data == "L" || Data == "R" || Data == "S" || Data == "Q" || Data == "W" || Data == "q" || Data == "w")
+  if (Data == 'F' || Data == 'B' || Data == 'L' || Data == 'R' || Data == 'S' || Data == 'Q' || Data == 'W' | Data == 'q' || Data == 'w')
   {
     moveData = Data;
+    Serial.println("Move data");
+    Serial.println(moveData);
   }
-  else if (Data == "0" || Data == "1" || Data == "2" || Data == "3" || Data == "4" || Data == "5" || Data == "6" || Data == "7" || Data == "8" || Data == "9")
+  else if (Data == '0' || Data == '1' || Data == '2' || Data == '3' || Data == '4' || Data == '5' || Data == '6' || Data == '7' || Data == '8' || Data == '9')
   {
-    int intData = Data.toInt();
+    // int intData = Data.toInt();
+    int intData = (int) Data;
     speed = (intData * 10) + startSpeed;
     Serial.println(Data);
+
+    Serial.println("Speed data");
+    Serial.println(speed);
   }
-  else if (Data == ".")
-  {
-    //Serial.println(Data);
-  }
+  // else if (Data == ".")
+  // {
+  //   //Serial.println(Data);
+  // }
 }
 
 void moveDataProcess()
